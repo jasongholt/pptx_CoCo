@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+config.py
+.streamlit/secrets.toml
+*.pptx
+.DS_Store
+.ipynb_checkpoints/
+node_modules/
+.snowflake/
+*.egg-info/
+dist/
+build/

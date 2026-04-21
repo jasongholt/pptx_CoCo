@@ -1,0 +1,160 @@
+-- ============================================================
+-- Setup Mock Data for Portfolio Risk Analysis
+-- ============================================================
+-- Run this script to create the PPTX_TEST database with
+-- deterministic test data for the Streamlit app and notebook.
+--
+-- Usage:
+--   snowsql -f setup_mock_data.sql
+--   -- or paste into a Snowflake worksheet
+-- ============================================================
+
+CREATE DATABASE IF NOT EXISTS PPTX_TEST;
+CREATE SCHEMA IF NOT EXISTS PPTX_TEST.GOLD;
+CREATE SCHEMA IF NOT EXISTS PPTX_TEST.PUBLIC;
+
+CREATE STAGE IF NOT EXISTS PPTX_TEST.PUBLIC.MY_STAGE
+  DIRECTORY = (ENABLE = TRUE)
+  ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');
+
+-- ============================================================
+-- 1. PORTFOLIO_RISK_SUMMARY  (1 row)
+-- ============================================================
+CREATE OR REPLACE TABLE PPTX_TEST.GOLD.PORTFOLIO_RISK_SUMMARY (
+    TOTAL_LOANS              NUMBER,
+    TOTAL_FUNDED_AMOUNT      NUMBER(18,2),
+    TOTAL_OUTSTANDING_BALANCE NUMBER(18,2),
+    TOTAL_COLLECTED          NUMBER(18,2),
+    WEIGHTED_AVG_CREDIT_SCORE NUMBER(6,1),
+    WEIGHTED_AVG_APR         NUMBER(5,2),
+    CURRENT_PCT              NUMBER(5,2),
+    DPD_30_PCT               NUMBER(5,2),
+    DPD_60_PCT               NUMBER(5,2),
+    PROJECTED_LOSSES         NUMBER(18,2),
+    LOSS_RESERVE_PCT         NUMBER(5,2)
+);
+
+INSERT INTO PPTX_TEST.GOLD.PORTFOLIO_RISK_SUMMARY VALUES (
+    5000,           -- TOTAL_LOANS
+    125000000.00,   -- TOTAL_FUNDED_AMOUNT ($125M)
+    98000000.00,    -- TOTAL_OUTSTANDING_BALANCE ($98M)
+    27000000.00,    -- TOTAL_COLLECTED ($27M)
+    642.5,          -- WEIGHTED_AVG_CREDIT_SCORE
+    18.75,          -- WEIGHTED_AVG_APR
+    78.50,          -- CURRENT_PCT
+    8.20,           -- DPD_30_PCT
+    4.10,           -- DPD_60_PCT
+    6125000.00,     -- PROJECTED_LOSSES ($6.125M)
+    6.25            -- LOSS_RESERVE_PCT
+);
+
+-- ============================================================
+-- 2. COLLECTIONS_EFFECTIVENESS  (5 rows)
+-- ============================================================
+CREATE OR REPLACE TABLE PPTX_TEST.GOLD.COLLECTIONS_EFFECTIVENESS (
+    DELINQUENCY_BUCKET   VARCHAR(20),
+    TOTAL_ACCOUNTS       NUMBER,
+    TOTAL_OUTSTANDING    NUMBER(18,2),
+    AVG_DPD_DAYS         NUMBER(6,1),
+    COLLECTION_RATE_PCT  NUMBER(5,2),
+    CURE_RATE_PCT        NUMBER(5,2),
+    ROLL_RATE_PCT        NUMBER(5,2)
+);
+
+INSERT INTO PPTX_TEST.GOLD.COLLECTIONS_EFFECTIVENESS VALUES
+    ('CURRENT',    3925, 76930000.00,  0.0, 99.50, 99.50,  0.50),
+    ('30_DPD',      410,  8036000.00, 22.5, 82.30, 45.20, 32.10),
+    ('60_DPD',      205,  4018000.00, 52.0, 64.10, 28.50, 42.30),
+    ('90_DPD',      310,  6076000.00, 85.0, 41.20, 12.80, 55.60),
+    ('120+_DPD',    150,  2940000.00, 145.0, 18.50,  5.20, 72.40);
+
+-- ============================================================
+-- 3. LOAN_PERFORMANCE_CUBE  (60 rows: 4 tiers x 15 months)
+-- ============================================================
+CREATE OR REPLACE TABLE PPTX_TEST.GOLD.LOAN_PERFORMANCE_CUBE (
+    ORIGINATION_MONTH    DATE,
+    RISK_TIER            VARCHAR(20),
+    LOAN_COUNT           NUMBER,
+    TOTAL_FUNDED         NUMBER(18,2),
+    DELINQUENT_LOANS     NUMBER,
+    DELINQUENCY_RATE_PCT NUMBER(5,2),
+    AVG_APR              NUMBER(5,2),
+    AVG_CREDIT_SCORE     NUMBER(6,1),
+    CNL_RATE_PCT         NUMBER(5,2)
+);
+
+INSERT INTO PPTX_TEST.GOLD.LOAN_PERFORMANCE_CUBE VALUES
+    -- SUPER_PRIME (credit 750+, low APR, low delinquency)
+    ('2024-01-01', 'SUPER_PRIME', 120, 3600000.00,  2, 1.67, 6.50, 782.0, 0.40),
+    ('2024-02-01', 'SUPER_PRIME', 115, 3450000.00,  1, 0.87, 6.45, 785.0, 0.35),
+    ('2024-03-01', 'SUPER_PRIME', 125, 3750000.00,  2, 1.60, 6.55, 780.0, 0.42),
+    ('2024-04-01', 'SUPER_PRIME', 110, 3300000.00,  1, 0.91, 6.40, 788.0, 0.30),
+    ('2024-05-01', 'SUPER_PRIME', 118, 3540000.00,  2, 1.69, 6.60, 779.0, 0.45),
+    ('2024-06-01', 'SUPER_PRIME', 122, 3660000.00,  1, 0.82, 6.48, 783.0, 0.38),
+    ('2024-07-01', 'SUPER_PRIME', 130, 3900000.00,  2, 1.54, 6.52, 781.0, 0.41),
+    ('2024-08-01', 'SUPER_PRIME', 108, 3240000.00,  1, 0.93, 6.42, 787.0, 0.33),
+    ('2024-09-01', 'SUPER_PRIME', 125, 3750000.00,  3, 2.40, 6.58, 778.0, 0.50),
+    ('2024-10-01', 'SUPER_PRIME', 112, 3360000.00,  1, 0.89, 6.44, 786.0, 0.32),
+    ('2024-11-01', 'SUPER_PRIME', 128, 3840000.00,  2, 1.56, 6.50, 782.0, 0.43),
+    ('2024-12-01', 'SUPER_PRIME', 116, 3480000.00,  1, 0.86, 6.46, 784.0, 0.36),
+    ('2025-01-01', 'SUPER_PRIME', 120, 3600000.00,  2, 1.67, 6.55, 780.0, 0.44),
+    ('2025-02-01', 'SUPER_PRIME', 114, 3420000.00,  1, 0.88, 6.43, 786.0, 0.34),
+    ('2025-03-01', 'SUPER_PRIME', 126, 3780000.00,  2, 1.59, 6.51, 781.0, 0.42),
+
+    -- PRIME (credit 680-749, moderate APR, moderate delinquency)
+    ('2024-01-01', 'PRIME', 150, 3750000.00,  8, 5.33, 12.50, 715.0, 1.80),
+    ('2024-02-01', 'PRIME', 145, 3625000.00,  7, 4.83, 12.40, 718.0, 1.65),
+    ('2024-03-01', 'PRIME', 155, 3875000.00,  9, 5.81, 12.60, 712.0, 1.95),
+    ('2024-04-01', 'PRIME', 140, 3500000.00,  6, 4.29, 12.35, 720.0, 1.50),
+    ('2024-05-01', 'PRIME', 148, 3700000.00,  8, 5.41, 12.55, 714.0, 1.85),
+    ('2024-06-01', 'PRIME', 152, 3800000.00,  7, 4.61, 12.42, 717.0, 1.70),
+    ('2024-07-01', 'PRIME', 160, 4000000.00,  9, 5.63, 12.58, 713.0, 1.90),
+    ('2024-08-01', 'PRIME', 138, 3450000.00,  6, 4.35, 12.38, 719.0, 1.55),
+    ('2024-09-01', 'PRIME', 155, 3875000.00, 10, 6.45, 12.65, 710.0, 2.10),
+    ('2024-10-01', 'PRIME', 142, 3550000.00,  7, 4.93, 12.45, 716.0, 1.72),
+    ('2024-11-01', 'PRIME', 158, 3950000.00,  8, 5.06, 12.52, 714.0, 1.82),
+    ('2024-12-01', 'PRIME', 144, 3600000.00,  7, 4.86, 12.41, 718.0, 1.68),
+    ('2025-01-01', 'PRIME', 150, 3750000.00,  8, 5.33, 12.55, 715.0, 1.80),
+    ('2025-02-01', 'PRIME', 146, 3650000.00,  7, 4.79, 12.43, 717.0, 1.66),
+    ('2025-03-01', 'PRIME', 156, 3900000.00,  9, 5.77, 12.60, 712.0, 1.92),
+
+    -- NEAR_PRIME (credit 620-679, higher APR, higher delinquency)
+    ('2024-01-01', 'NEAR_PRIME', 100, 2000000.00, 12, 12.00, 19.50, 648.0, 4.20),
+    ('2024-02-01', 'NEAR_PRIME',  95, 1900000.00, 10, 10.53, 19.40, 652.0, 3.80),
+    ('2024-03-01', 'NEAR_PRIME', 105, 2100000.00, 14, 13.33, 19.60, 645.0, 4.60),
+    ('2024-04-01', 'NEAR_PRIME',  90, 1800000.00,  9, 10.00, 19.30, 655.0, 3.50),
+    ('2024-05-01', 'NEAR_PRIME',  98, 1960000.00, 12, 12.24, 19.55, 647.0, 4.30),
+    ('2024-06-01', 'NEAR_PRIME', 102, 2040000.00, 11, 10.78, 19.42, 651.0, 3.90),
+    ('2024-07-01', 'NEAR_PRIME', 108, 2160000.00, 14, 12.96, 19.58, 646.0, 4.50),
+    ('2024-08-01', 'NEAR_PRIME',  88, 1760000.00,  9, 10.23, 19.35, 654.0, 3.60),
+    ('2024-09-01', 'NEAR_PRIME', 105, 2100000.00, 15, 14.29, 19.65, 643.0, 4.90),
+    ('2024-10-01', 'NEAR_PRIME',  92, 1840000.00, 10, 10.87, 19.45, 650.0, 3.85),
+    ('2024-11-01', 'NEAR_PRIME', 106, 2120000.00, 13, 12.26, 19.52, 648.0, 4.25),
+    ('2024-12-01', 'NEAR_PRIME',  94, 1880000.00, 10, 10.64, 19.38, 653.0, 3.75),
+    ('2025-01-01', 'NEAR_PRIME', 100, 2000000.00, 12, 12.00, 19.50, 648.0, 4.20),
+    ('2025-02-01', 'NEAR_PRIME',  96, 1920000.00, 10, 10.42, 19.42, 651.0, 3.82),
+    ('2025-03-01', 'NEAR_PRIME', 104, 2080000.00, 13, 12.50, 19.58, 646.0, 4.40),
+
+    -- SUBPRIME (credit <620, highest APR, highest delinquency)
+    ('2024-01-01', 'SUBPRIME', 80, 1200000.00, 18, 22.50, 26.00, 585.0, 8.50),
+    ('2024-02-01', 'SUBPRIME', 75, 1125000.00, 15, 20.00, 25.80, 590.0, 7.80),
+    ('2024-03-01', 'SUBPRIME', 85, 1275000.00, 20, 23.53, 26.20, 582.0, 9.10),
+    ('2024-04-01', 'SUBPRIME', 70, 1050000.00, 13, 18.57, 25.60, 595.0, 7.20),
+    ('2024-05-01', 'SUBPRIME', 78, 1170000.00, 17, 21.79, 26.10, 584.0, 8.60),
+    ('2024-06-01', 'SUBPRIME', 82, 1230000.00, 16, 19.51, 25.90, 588.0, 8.00),
+    ('2024-07-01', 'SUBPRIME', 88, 1320000.00, 21, 23.86, 26.15, 583.0, 9.20),
+    ('2024-08-01', 'SUBPRIME', 68, 1020000.00, 12, 17.65, 25.70, 593.0, 7.10),
+    ('2024-09-01', 'SUBPRIME', 85, 1275000.00, 22, 25.88, 26.30, 580.0, 9.80),
+    ('2024-10-01', 'SUBPRIME', 72, 1080000.00, 14, 19.44, 25.85, 589.0, 7.60),
+    ('2024-11-01', 'SUBPRIME', 86, 1290000.00, 19, 22.09, 26.05, 585.0, 8.70),
+    ('2024-12-01', 'SUBPRIME', 74, 1110000.00, 14, 18.92, 25.75, 591.0, 7.50),
+    ('2025-01-01', 'SUBPRIME', 80, 1200000.00, 18, 22.50, 26.00, 585.0, 8.50),
+    ('2025-02-01', 'SUBPRIME', 76, 1140000.00, 15, 19.74, 25.82, 590.0, 7.90),
+    ('2025-03-01', 'SUBPRIME', 84, 1260000.00, 19, 22.62, 26.18, 583.0, 8.80);
+
+-- Verify
+SELECT 'PORTFOLIO_RISK_SUMMARY' AS TABLE_NAME, COUNT(*) AS ROW_COUNT FROM PPTX_TEST.GOLD.PORTFOLIO_RISK_SUMMARY
+UNION ALL
+SELECT 'COLLECTIONS_EFFECTIVENESS', COUNT(*) FROM PPTX_TEST.GOLD.COLLECTIONS_EFFECTIVENESS
+UNION ALL
+SELECT 'LOAN_PERFORMANCE_CUBE', COUNT(*) FROM PPTX_TEST.GOLD.LOAN_PERFORMANCE_CUBE;

@@ -1,0 +1,21 @@
+definition_version: 2
+entities:
+  streamlit_app:
+    type: streamlit
+    identifier:
+      database: PPTX_TEST          # Update to your database
+      schema: PUBLIC                # Update to your schema
+      name: PORTFOLIO_RISK_APP     # Update to your app name
+    title: Portfolio Risk Analysis
+    query_warehouse: DEMO_JGH      # Update to your warehouse
+    # compute_pool: YOUR_POOL      # Uncomment if using SPCS
+    # run_mode: SpcsOnly           # Uncomment if using SPCS
+    execute_as: OWNER
+    main_file: streamlit_app.py
+    # external_access_integrations: # Uncomment if needed for PyPI
+    #   - YOUR_EXTERNAL_ACCESS
+    artifacts:
+      - config.py
+      - pyproject.toml
+      - streamlit_app.py
+      - .streamlit/config.toml
