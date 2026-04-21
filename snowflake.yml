@@ -3,17 +3,17 @@ entities:
   streamlit_app:
     type: streamlit
     identifier:
-      database: PPTX_TEST          # Update to your database
-      schema: PUBLIC                # Update to your schema
-      name: PORTFOLIO_RISK_APP     # Update to your app name
+      database: MY_DATABASE             # Update to your database
+      schema: PUBLIC                    # Update to your schema
+      name: MY_APP_NAME                # Update to your app name
     title: Portfolio Risk Analysis
-    query_warehouse: DEMO_JGH      # Update to your warehouse
-    # compute_pool: YOUR_POOL      # Uncomment if using SPCS
-    # run_mode: SpcsOnly           # Uncomment if using SPCS
+    query_warehouse: MY_WAREHOUSE       # Update to your warehouse
+    # compute_pool: MY_POOL            # Uncomment if using SPCS
+    # run_mode: SpcsOnly               # Uncomment if using SPCS
     execute_as: OWNER
     main_file: streamlit_app.py
-    # external_access_integrations: # Uncomment if needed for PyPI
-    #   - YOUR_EXTERNAL_ACCESS
+    # external_access_integrations:    # Uncomment if needed for PyPI
+    #   - MY_EXTERNAL_ACCESS
     artifacts:
       - config.py
       - pyproject.toml
